@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WaHooWest – Quiz Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
+      color: #3c1e0f;
+    }
+
+    /* ── Shared container ─────────────────────────────── */
+    #app {
+      position: relative;
+      width: 1366px;
+      height: 768px;
+      overflow: hidden;
+      background: #fff;
+      border: 2px solid #444;
+    }
+
+    .screen {
+      display: none;
+      position: absolute;
+      inset: 0;
+    }
+    .screen.active { display: flex; }
+
+    /* Background images fill the screen container */
+    .bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    /* ── Home Screen ──────────────────────────────────── */
+    #home-screen {
+      justify-content: center;
+      align-items: center;
+    }
+    #signin-btn {
+      position: absolute;
+      left: 390px; top: 475px;
+      width: 585px; height: 125px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font: bold 72px 'Comic Sans MS', cursive;
+      color: rgb(92, 33, 22);
+      z-index: 2;
+    }
+    #signin-btn:hover { opacity: 0.85; }
+    #auth-code-banner {
+      display: none;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 20px 40px;
+      border-radius: 12px;
+      font-size: 28px;
+      z-index: 10;
+      text-align: center;
+    }
+
+    /* ── Main / Subject Screen ────────────────────────── */
+    #main-screen {
+      justify-content: center;
+      align-items: center;
+    }
+    .subject-btn {
+      position: absolute;
+      width: 480px;
+      height: 125px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font: 32px 'Comic Sans MS', cursive;
+      color: rgb(92, 33, 22);
+      z-index: 2;
+    }
+    .subject-btn:hover { opacity: 0.8; }
+    #btn-sat  { left: 440px; top: 340px; }
+    #btn-lsat { left: 440px; top: 490px; }
+    #btn-mcat { left: 440px; top: 625px; }
+
+    /* ── Character Selection ──────────────────────────── */
+    #char-screen {
+      justify-content: center;
+      align-items: center;
+    }
+    #char-grid {
+      position: absolute;
+      top: 100px; left: 50px;
+      display: grid;
+      grid-template-columns: repeat(4, 200px);
+      grid-template-rows: repeat(2, 240px);
+      gap: 40px 40px;
+      z-index: 2;
+    }
+    .char-cell {
+      width: 200px; height: 240px;
+      background: transparent;
+      border: 3px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+      text-shadow: 1px 1px 3px #000;
+      padding-bottom: 8px;
+    }
+    .char-cell:hover { border-color: #fff; }
+
+    /* ── Waiting Screen ───────────────────────────────── */
+    #waiting-screen {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #waiting-screen .bg {
+      object-fit: none;
+      object-position: center;
+    }
+    #wait-status {
+      position: absolute;
+      bottom: 80px; left: 50px;
+      font-size: 24px;
+      color: #666;
+      line-height: 1.8;
+      z-index: 2;
+    }
+
+    /* ── Game Screen ──────────────────────────────────── */
+    #game-screen {
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Left panel: question text + choices */
+    #game-left {
+      position: absolute;
+      left: 90px; top: 20px;
+      width: 550px;
+      z-index: 2;
+    }
+    #q-number {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    #q-passage {
+      font-size: 18px;
+      color: rgb(80,50,30);
+      margin-bottom: 8px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    #q-text {
+      font-size: 22px;
+      color: rgb(30,15,5);
+      margin-bottom: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    /* Choice buttons in the brown box area */
+    #choices-area {
+      position: absolute;
+      left: 90px; top: 470px;
+      width: 550px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .choice-btn {
+      width: 100%;
+      min-height: 54px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.22);
+      border: 2px solid rgb(80,40,20);
+      border-radius: 6px;
+      cursor: pointer;
+      font: 20px 'Comic Sans MS', cursive;
+      color: rgb(40,20,5);
+      text-align: left;
+    }
+    .choice-btn:hover {
+      background: rgba(255,255,255,0.50);
+    }
+
+    #done-banner {
+      display: none;
+      position: absolute;
+      left: 90px; top: 480px;
+      width: 550px;
+      z-index: 2;
+      font-size: 28px;
+    }
+    #done-banner .sub {
+      font-size: 20px;
+      color: rgb(100,60,30);
+      margin-top: 8px;
+    }
+
+    /* Right panel: image + opponent data */
+    #game-right-img {
+      position: absolute;
+      right: 90px; top: 30px;
+      width: 540px; height: 420px;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    #game-right-img img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #opponent-panel {
+      position: absolute;
+      right: 90px; top: 480px;
+      width: 540px;
+      z-index: 2;
+      font-size: 26px;
+      line-height: 1.6;
+    }
+
+    /* ── End Screen ───────────────────────────────────── */
+    #end-screen {
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+    }
+    #end-text {
+      font-size: 36px;
+      color: #000;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- ═══ HOME ═══ -->
+  <div id="home-screen" class="screen active">
+    <img class="bg" src="images/homePage.png" alt="">
+    <button id="signin-btn">SIGN IN</button>
+    <div id="auth-code-banner"></div>
+  </div>
+
+  <!-- ═══ SUBJECT SELECT ═══ -->
+  <div id="main-screen" class="screen">
+    <img class="bg" src="images/mainScreen.png" alt="">
+    <button id="btn-sat" class="subject-btn">SAT</button>
+    <button id="btn-lsat" class="subject-btn">LSAT</button>
+    <button id="btn-mcat" class="subject-btn">MCAT</button>
+  </div>
+
+  <!-- ═══ CHARACTER SELECT ═══ -->
+  <div id="char-screen" class="screen">
+    <img class="bg" src="images/charSelection.png" alt="">
+    <img class="bg" src="images/charPalette.png" alt="" style="z-index:1">
+    <div id="char-grid"></div>
+  </div>
+
+  <!-- ═══ WAITING ═══ -->
+  <div id="waiting-screen" class="screen">
+    <img class="bg" src="images/loadingscreen.png" alt="">
+    <div id="wait-status"></div>
+  </div>
+
+  <!-- ═══ GAME ═══ -->
+  <div id="game-screen" class="screen">
+    <img class="bg" src="images/gamescreen.png" alt="">
+
+    <!-- Left panel: question -->
+    <div id="game-left">
+      <div id="q-number"></div>
+      <div id="q-passage"></div>
+      <div id="q-text"></div>
+    </div>
+
+    <!-- Left panel: choices -->
+    <div id="choices-area"></div>
+
+    <!-- Done overlay (replaces choices when finished) -->
+    <div id="done-banner">
+      <div id="done-score"></div>
+      <div class="sub">Waiting for opponent to finish...</div>
+    </div>
+
+    <!-- Right panel: question image -->
+    <div id="game-right-img"></div>
+
+    <!-- Right panel: opponent data -->
+    <div id="opponent-panel"></div>
+  </div>
+
+  <!-- ═══ END ═══ -->
+  <div id="end-screen" class="screen">
+    <div id="end-text"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   All game logic – protocols, auth, websocket client, UI
+   ═══════════════════════════════════════════════════════════ */
+
+// ── Protocols ───────────────────────────────────────────
+const Protocols = {
+  Response: {
+    NICKNAME:             "protocols.response.nickname",
+    QUESTIONS:            "protocols.questions",
+    QUESTION_DETAIL:      "protocols.question.detail",
+    START:                "protocols.start",
+    OPPONENT:             "protocols.opponent",
+    OPPONENT_ADVANCE:     "protocols.opponent.advance",
+    ANSWER_VALID:         "protocols.answer.valid",
+    ANSWER_INVALID:       "protocols.answer.invalid",
+    WINNER:               "protocols.winner",
+    TIE:                  "protocols.tie",
+    GAME_OVER:            "protocols.game.over",
+    OPPONENT_DISCONNECTED:"protocols.opponent.disconnected",
+  },
+  Request: {
+    ANSWER:   "protocols.answer",
+    NICKNAME: "protocols.nickname",
+    TABLE:    "protocols.table",
+    LEAVE:    "protocols.leave",
+  },
+};
+
+// ── Config ──────────────────────────────────────────────
+const AUTH0_DOMAIN    = "dev-rme822qrk8tmjtko.us.auth0.com";
+const AUTH0_CLIENT_ID = "iHrUT1YqwO0o86sRUc7u9sNGyPBssFnq";
+const AUTH0_AUDIENCE  = "https://dev-rme822qrk8tmjtko.us.auth0.com/api/v2/";
+const SERVER_HOST     = "localhost";
+const SERVER_PORT     = 64210;
+
+// ── Auth Manager ────────────────────────────────────────
+const auth = {
+  deviceCode: null,
+  userCode: null,
+  verificationUri: null,
+  accessToken: null,
+
+  async startLogin() {
+    const resp = await fetch(`https://${AUTH0_DOMAIN}/oauth/device/code`, {
+      method: "POST",
+      body: new URLSearchParams({
+        client_id: AUTH0_CLIENT_ID,
+        scope: "openid profile email",
+        audience: AUTH0_AUDIENCE,
+      }),
+    });
+    const data = await resp.json();
+    this.deviceCode = data.device_code;
+    this.userCode = data.user_code;
+    this.verificationUri = data.verification_uri_complete;
+    if (this.verificationUri) window.open(this.verificationUri, "_blank");
+    return this.userCode;
+  },
+
+  async checkToken() {
+    const resp = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
+      method: "POST",
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+        device_code: this.deviceCode || "",
+        client_id: AUTH0_CLIENT_ID,
+      }),
+    });
+    const data = await resp.json();
+    if (resp.status === 200) {
+      this.accessToken = data.access_token;
+      return true;
+    }
+    return false;
+  },
+
+  async fetchUserinfo() {
+    if (!this.accessToken) return null;
+    try {
+      const resp = await fetch(`https://${AUTH0_DOMAIN}/userinfo`, {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      });
+      if (resp.ok) return await resp.json();
+    } catch (e) { console.log("fetchUserinfo failed", e); }
+    return null;
+  },
+};
+
+// ── WebSocket Client ────────────────────────────────────
+const client = {
+  ws: null,
+  nickname: null,
+  closed: false,
+  started: false,
+  questions: [],
+  currentQuestionIndex: 0,
+  opponentQuestionIndex: 0,
+  opponentName: null,
+  winner: null,
+  youWon: false,
+  tie: false,
+  gameOver: false,
+  correctCount: 0,
+  currentQuestionText: null,
+  currentChoices: null,
+  currentImageData: null,
+  currentPassage: null,
+  currentAnswer: null,
+
+  start() {
+    return new Promise((resolve, reject) => {
+      const url = `ws://${SERVER_HOST}:${SERVER_PORT}`;
+      try { this.ws = new WebSocket(url); } catch (e) { return reject(e); }
+
+      this.ws.onopen = () => { console.log("[WS] Connected"); resolve(); };
+      this.ws.onerror = (e) => { console.log("[WS] Error", e); reject(new Error("WS failed")); };
+      this.ws.onclose = () => { console.log("[WS] Closed"); this.closed = true; };
+
+      this.ws.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        this._handle(msg);
+      };
+    });
+  },
+
+  send(type, data) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type, data }));
+  },
+
+  close() {
+    this.closed = true;
+    try { this.ws && this.ws.close(); } catch {}
+  },
+
+  _handle(msg) {
+    const { type, data } = msg;
+    console.log("[CLIENT]", type);
+
+    switch (type) {
+      case Protocols.Response.QUESTIONS:
+        this.questions = data;
+        break;
+
+      case Protocols.Response.QUESTION_DETAIL:
+        if (!data) break;
+        this.currentQuestionText = data.question;
+        this.currentChoices      = data.choices;
+        this.currentPassage      = data.passage;
+        this.currentAnswer       = data.answer;
+        this.currentImageData    = data.image_data || null;
+        ui.renderGame();
+        break;
+
+      case Protocols.Response.OPPONENT:
+        this.opponentName = data;
+        ui.refreshWaiting();
+        break;
+
+      case Protocols.Response.OPPONENT_ADVANCE:
+        this.opponentQuestionIndex++;
+        ui.renderOpponent();
+        break;
+
+      case Protocols.Response.ANSWER_VALID:
+        this.currentQuestionIndex++;
+        this.correctCount++;
+        break;
+
+      case Protocols.Response.ANSWER_INVALID:
+        this.currentQuestionIndex++;
+        break;
+
+      case Protocols.Response.GAME_OVER:
+        this.gameOver = true;
+        ui.renderGame();
+        break;
+
+      case Protocols.Response.START:
+        this.started = true;
+        ui.showScreen("game-screen");
+        ui.renderGame();
+        break;
+
+      case Protocols.Response.TIE:
+        this.tie = true;
+        ui.showEnd();
+        break;
+
+      case Protocols.Response.WINNER:
+        if (data === null) this.youWon = true;
+        else this.winner = data;
+        ui.showEnd();
+        break;
+
+      case Protocols.Response.OPPONENT_DISCONNECTED:
+        this.close();
+        ui.showEnd();
+        break;
+    }
+  },
+};
+
+// ── UI Controller ───────────────────────────────────────
+const ui = {
+  showScreen(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  },
+
+  /* ── Home / Auth ─────────────────────── */
+  initHome() {
+    document.getElementById("signin-btn").onclick = async () => {
+      const code = await auth.startLogin();
+      const banner = document.getElementById("auth-code-banner");
+      banner.textContent = `Please log in at your browser.  Code: ${code}`;
+      banner.style.display = "block";
+      this._pollAuth();
+    };
+  },
+
+  _authInterval: null,
+  _pollAuth() {
+    this._authInterval = setInterval(async () => {
+      const ok = await auth.checkToken();
+      if (!ok) return;
+      clearInterval(this._authInterval);
+      document.getElementById("auth-code-banner").style.display = "none";
+
+      try { await client.start(); } catch (e) {
+        console.error("Server connection failed", e);
+        return;
+      }
+
+      const profile = await auth.fetchUserinfo();
+      let nick = "Player";
+      if (profile) nick = profile.nickname || profile.name || profile.preferred_username || "Player";
+      client.send(Protocols.Request.NICKNAME, nick);
+      client.nickname = nick;
+
+      ui.showScreen("main-screen");
+    }, 5000);
+  },
+
+  /* ── Subject Selection ───────────────── */
+  initSubjects() {
+    const subjects = {
+      "btn-sat":  "QUESTION_ANSWERS_SATMATH",
+      "btn-lsat": "QUESTION_ANSWERS_LSAT",
+      "btn-mcat": "QUESTION_ANSWERS_MCAT",
+    };
+    for (const [btnId, table] of Object.entries(subjects)) {
+      document.getElementById(btnId).onclick = () => {
+        client.send(Protocols.Request.TABLE, table);
+        ui.showScreen("char-screen");
+      };
+    }
+  },
+
+  /* ── Character Selection ─────────────── */
+  initCharacters() {
+    const names = ["Red Panda","Dino","Capybara","Chick","Penguin","Bunny","Cat","Elephant"];
+    const grid = document.getElementById("char-grid");
+    names.forEach(name => {
+      const cell = document.createElement("div");
+      cell.className = "char-cell";
+      cell.textContent = name;
+      cell.onclick = () => {
+        console.log("Selected:", name);
+        ui.showScreen("waiting-screen");
+        ui.refreshWaiting();
+      };
+      grid.appendChild(cell);
+    });
+  },
+
+  /* ── Waiting ─────────────────────────── */
+  refreshWaiting() {
+    const el = document.getElementById("wait-status");
+    if (!el) return;
+    el.innerHTML = [
+      `Logged in: true`,
+      `Questions loaded: ${client.questions.length > 0}`,
+      `Opponent: ${client.opponentName || "searching..."}`,
+    ].join("<br>");
+  },
+
+  /* ── Game Screen ─────────────────────── */
+  renderGame() {
+    const totalQs = Math.min(client.questions.length || 3, 3);
+    const qNum = client.currentQuestionIndex + 1;
+
+    document.getElementById("q-number").textContent =
+      `Question ${qNum} of ${totalQs}`;
+
+    document.getElementById("q-passage").textContent =
+      client.currentPassage || "";
+
+    document.getElementById("q-text").textContent =
+      client.currentQuestionText || "";
+
+    const choicesArea = document.getElementById("choices-area");
+    const doneBanner  = document.getElementById("done-banner");
+
+    if (client.gameOver) {
+      choicesArea.style.display = "none";
+      doneBanner.style.display = "block";
+      document.getElementById("done-score").textContent =
+        `All done! Score: ${client.correctCount}/${totalQs}`;
+    } else {
+      doneBanner.style.display = "none";
+      choicesArea.style.display = "flex";
+      choicesArea.innerHTML = "";
+
+      const letters = ["A","B","C","D"];
+      const choices = client.currentChoices || {};
+      letters.forEach(letter => {
+        const text = choices[letter];
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.textContent = text ? `${letter}:  ${text}` : `${letter}:  ---`;
+        btn.onclick = () => {
+          if (client.gameOver) return;
+          console.log("Answer:", letter);
+          client.send(Protocols.Request.ANSWER, letter);
+        };
+        choicesArea.appendChild(btn);
+      });
+    }
+
+    const imgPanel = document.getElementById("game-right-img");
+    imgPanel.innerHTML = "";
+    if (client.currentImageData) {
+      const img = document.createElement("img");
+      img.src = `data:image/png;base64,${client.currentImageData}`;
+      imgPanel.appendChild(img);
+    }
+
+    this.renderOpponent();
+  },
+
+  renderOpponent() {
+    const el = document.getElementById("opponent-panel");
+    const oppQ = client.opponentQuestionIndex + 1;
+    const myQ  = client.currentQuestionIndex + 1;
+    el.innerHTML = `
+      ${client.opponentName
+        ? `<div><b>Opponent:</b></div><div>${client.opponentName}</div>`
+        : ""}
+      <div style="margin-top:12px">Question: ${oppQ} / 3</div>
+      <div>You: Question ${myQ} / 3</div>
+    `;
+  },
+
+  /* ── End Screen ──────────────────────── */
+  showEnd() {
+    let text;
+    if (client.tie) {
+      text = `It's a tie! You both scored ${client.correctCount}/3`;
+    } else if (client.youWon) {
+      text = `You won! Score: ${client.correctCount}/3`;
+    } else if (client.winner) {
+      text = `${client.winner} won! Your score: ${client.correctCount}/3`;
+    } else {
+      text = "Opponent left the game.....";
+    }
+    document.getElementById("end-text").textContent = text;
+    this.showScreen("end-screen");
+  },
+};
+
+// ── Boot ────────────────────────────────────────────────
+ui.initHome();
+ui.initSubjects();
+ui.initCharacters();
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "wahoowest-ts",
+  "version": "1.0.0",
+  "description": "WaHooWest - Multiplayer Quiz Game (TypeScript)",
+  "scripts": {
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:client": "mkdir -p dist/client && cp client/src/index.html dist/client/ && cp -r client/images dist/client/",
+    "build": "npm run build:server && npm run build:client",
+    "start:server": "node dist/server/server/src/main.js",
+    "dev:server": "ts-node server/src/main.ts",
+    "dev:client": "npx http-server dist/client -p 8080 -c-1",
+    "start": "npm run build && npm run start:server"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "snowflake-sdk": "^1.9.0",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/ws": "^8.5.10",
+    "http-server": "^14.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
