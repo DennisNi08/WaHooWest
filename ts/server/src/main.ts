@@ -1,5 +1,7 @@
 import * as dotenv from "dotenv";
 import * as path from "path";
+import * as http from "http";
+import * as fs from "fs";
 import { WebSocketServer, WebSocket } from "ws";
 import { Protocols, Message } from "../../shared/protocols";
 import { Room } from "./room";
@@ -14,7 +16,9 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") });
  * Runs on ws://localhost:64210 by default.
  */
 class Server {
+  private httpServer: http.Server;
   private wss: WebSocketServer;
+  private clientDir: string;
 
   /** nickname per WebSocket */
   private clientNames = new Map<WebSocket, string>();
@@ -29,12 +33,80 @@ class Server {
   private waitingBySubjectMap = new Map<string, WebSocket>();
 
   constructor(private host = "0.0.0.0", private port = 64210) {
-    this.wss = new WebSocketServer({ host, port });
-    console.log(`Server listening on ws://${host}:${port}`);
+    // Resolve client directory - works in both dev (ts-node) and prod (compiled JS)
+    // Try multiple possible paths since the exact __dirname varies by execution context
+    const possiblePaths = [
+      path.join(__dirname, "..", "..", "client", "src"),  // ts-node: server/src -> client/src
+      path.join(__dirname, "..", "..", "..", "..", "client", "src"),  // compiled: dist/server/server/src -> client/src
+      path.resolve("client", "src"),  // relative to cwd
+    ];
+    
+    this.clientDir = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+    console.log(`Using client directory: ${this.clientDir}`);
+
+    // Create HTTP server
+    this.httpServer = http.createServer((req, res) => {
+      this.handleHttpRequest(req, res);
+    });
+
+    // Attach WebSocket server to HTTP server
+    this.wss = new WebSocketServer({ server: this.httpServer });
+    console.log(`Server listening on http://${host}:${port}`);
 
     this.wss.on("connection", (ws) => {
       console.log(`[CONNECT] New WebSocket connection`);
       this.handleConnect(ws);
+    });
+
+    this.httpServer.listen(this.port, this.host);
+  }
+
+  /* ── HTTP request handling ──────────────────────────────── */
+
+  private handleHttpRequest(req: http.IncomingMessage, res: http.ServerResponse): void {
+    // Parse URL and get pathname only (remove query strings)
+    const url = req.url || "/";
+    const pathname = url.split("?")[0];
+    
+    // Normalize the path: remove leading slash and default to index.html
+    let requestPath = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+    
+    // Build full file path
+    const filePath = path.normalize(path.join(this.clientDir, requestPath));
+    
+    // Security: ensure resolved path is within clientDir
+    const normalizedClientDir = path.normalize(this.clientDir);
+    if (!filePath.startsWith(normalizedClientDir)) {
+      res.writeHead(403, { "Content-Type": "text/plain" });
+      res.end("Forbidden");
+      console.log(`[HTTP] 403: ${pathname} (path traversal attempt)`);
+      return;
+    }
+
+    // Try to read and serve the file
+    fs.readFile(filePath, (err, content) => {
+      if (err) {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Not found");
+        console.log(`[HTTP] 404: ${pathname} (file not found at ${filePath})`);
+        return;
+      }
+
+      // Determine content type
+      const ext = path.extname(filePath).toLowerCase();
+      let contentType = "text/plain";
+      if (ext === ".html") contentType = "text/html";
+      else if (ext === ".css") contentType = "text/css";
+      else if (ext === ".js") contentType = "application/javascript";
+      else if (ext === ".json") contentType = "application/json";
+      else if (ext === ".png") contentType = "image/png";
+      else if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg";
+      else if (ext === ".gif") contentType = "image/gif";
+      else if (ext === ".svg") contentType = "image/svg+xml";
+
+      res.writeHead(200, { "Content-Type": contentType });
+      res.end(content);
+      console.log(`[HTTP] 200: ${pathname}`);
     });
   }
 
