@@ -237,10 +237,19 @@ class Server {
     if (!room) return;
 
     const correct = room.verifyAnswer(client, data);
+    // Build review item for the just-answered question (index already incremented)
+    const answeredIdx = (room.indexes.get(client) ?? 1) - 1;
+    const ch = room.choiceOptions[answeredIdx] ?? [null, null, null, null];
+    const reviewItem = {
+      question: room.questions[answeredIdx] ?? "",
+      correctAnswer: room.answers[answeredIdx] ?? "",
+      yourAnswer: data,
+      choices: { A: ch[0], B: ch[1], C: ch[2], D: ch[3] },
+    };
     if (correct) {
-      this.send(Protocols.Response.ANSWER_VALID, null, client);
+      this.send(Protocols.Response.ANSWER_VALID, reviewItem, client);
     } else {
-      this.send(Protocols.Response.ANSWER_INVALID, null, client);
+      this.send(Protocols.Response.ANSWER_INVALID, reviewItem, client);
     }
 
     this.sendToOpponent(Protocols.Response.OPPONENT_ADVANCE, null, client);
