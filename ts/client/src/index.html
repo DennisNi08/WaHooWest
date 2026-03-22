@@ -67,13 +67,16 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.7);
-      color: #2a2121;
-      padding: 20px 40px;
-      border-radius: 12px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 30px 48px;
+      border-radius: 16px;
+      border: 2px solid #ffd54f;
       font-size: 28px;
       z-index: 10;
       text-align: center;
+      min-width: 500px;
+      max-width: 80%;
     }
 
     /* ── Main / Subject Screen ────────────────────────── */
@@ -340,14 +343,46 @@
       position: absolute;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      z-index: 2;
-      font-size: 32px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.80);
+      border: 3px solid #ffd54f;
+      border-radius: 16px;
+      padding: 40px 60px;
+      min-width: 400px;
+      max-width: 80%;
       text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    #done-score {
+      font-size: 38px;
+      font-weight: bold;
+      color: #ffd54f;
+      margin-bottom: 16px;
     }
     #done-banner .sub {
-      font-size: 20px;
-      color: rgb(100,60,30);
-      margin-top: 8px;
+      font-size: 22px;
+      color: #fff;
+      opacity: 0.85;
+    }
+    .done-dots {
+      display: inline-block;
+      animation: dotPulse 1.4s infinite steps(4, end);
+    }
+    @keyframes dotPulse {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+    .done-dots::after {
+      content: '';
+      animation: dotCycle 1.4s infinite steps(1, end);
+    }
+    @keyframes dotCycle {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
     }
 
     /* ── End Screen ───────────────────────────────────── */
@@ -558,7 +593,7 @@
     <!-- Done overlay -->
     <div id="done-banner">
       <div id="done-score"></div>
-      <div class="sub">Waiting for opponent to finish...</div>
+      <div class="sub">⏳ Waiting for opponent to finish<span class="done-dots"></span></div>
     </div>
   </div>
 
@@ -770,6 +805,7 @@ const client = {
         this.currentQuestionIndex++;
         this.correctCount++;
         ui.updateProgressBar();
+        ui.renderGame();
         break;
 
       case Protocols.Response.ANSWER_INVALID:
@@ -777,6 +813,7 @@ const client = {
           client.reviewHistory.push({ ...data, correct: false });
         }
         this.currentQuestionIndex++;
+        ui.renderGame();
         break;
 
       case Protocols.Response.GAME_OVER:
@@ -835,7 +872,44 @@ const ui = {
   /* ── Home / Auth ─────────────────────── */
   initHome() {
     document.getElementById("signin-btn").onclick = async () => {
-      await this._connectAsGuest();
+      const btn = document.getElementById("signin-btn");
+      btn.disabled = true;
+      btn.textContent = "Connecting...";
+
+      const userCode = await auth.startLogin();
+      if (!userCode) {
+        btn.disabled = false;
+        btn.textContent = "SIGN IN";
+        alert("Could not reach Auth0. Check your connection.");
+        return;
+      }
+
+      const banner = document.getElementById("auth-code-banner");
+      banner.style.display = "block";
+      banner.innerHTML = `
+        <div style="font-size:20px;color:#fff;margin-bottom:12px;">Open this URL in your browser:</div>
+        <div style="font-size:22px;font-weight:bold;color:#ffd54f;margin-bottom:16px;">
+          ${auth.verificationUri ? `<a href="${auth.verificationUri}" target="_blank" style="color:#ffd54f;">${auth.verificationUri}</a>` : 'https://dev-rme822qrk8tmjtko.us.auth0.com/activate'}
+        </div>
+        <div style="font-size:20px;color:#fff;margin-bottom:8px;">Or enter this code:</div>
+        <div style="font-size:40px;font-weight:bold;color:#ffd54f;letter-spacing:6px;">${userCode}</div>
+        <div style="font-size:16px;color:#aaa;margin-top:14px;">Waiting for login confirmation...</div>
+        <div style="margin-top:20px;">
+          <button id="guest-skip-btn" style="background:transparent;border:1px solid #aaa;color:#aaa;padding:8px 24px;border-radius:8px;font-size:15px;cursor:pointer;">
+            Skip — Play as Guest
+          </button>
+        </div>
+      `;
+      document.getElementById("guest-skip-btn").onclick = () => {
+        clearInterval(this._authInterval);
+        document.getElementById("auth-code-banner").style.display = "none";
+        document.getElementById("signin-btn").style.display = "block";
+        document.getElementById("signin-btn").disabled = false;
+        document.getElementById("signin-btn").textContent = "SIGN IN";
+        this._connectAsGuest();
+      };
+      btn.style.display = "none";
+      this._pollAuth();
     };
   },
 
@@ -858,10 +932,15 @@ const ui = {
       const ok = await auth.checkToken();
       if (!ok) return;
       clearInterval(this._authInterval);
+
       document.getElementById("auth-code-banner").style.display = "none";
+      document.getElementById("signin-btn").style.display = "block";
+      document.getElementById("signin-btn").disabled = false;
+      document.getElementById("signin-btn").textContent = "SIGN IN";
 
       try { await client.start(); } catch (e) {
         console.error("Server connection failed", e);
+        alert("Could not connect to game server on port 64210. Is it running?");
         return;
       }
 
@@ -946,8 +1025,8 @@ const ui = {
 
   /* ── Game Screen ─────────────────────── */
   renderGame() {
-    const totalQs = Math.min(client.questions.length || 3, 3);
-    const qNum = client.currentQuestionIndex + 1;
+    const totalQs = client.questions.length || 5;
+    const qNum = Math.min(client.currentQuestionIndex + 1, totalQs);
 
     document.getElementById("q-number").textContent =
       `Question ${qNum} of ${totalQs}`;
@@ -962,7 +1041,8 @@ const ui = {
     const rightCol  = document.getElementById("choices-right");
     const doneBanner = document.getElementById("done-banner");
 
-    if (client.gameOver) {
+    const playerDone = client.gameOver || client.currentQuestionIndex >= totalQs;
+    if (playerDone) {
       leftCol.style.display = "none";
       rightCol.style.display = "none";
       doneBanner.style.display = "block";
@@ -1176,6 +1256,9 @@ const ui = {
     }
 
     document.getElementById("play-again-btn").onclick = async () => {
+      // Notify server we're leaving the current game
+      client.send(Protocols.Request.LEAVE, null);
+
       // Move progress bar back to game screen
       const progressBar = document.getElementById("progress-bar");
       const gameScreen = document.getElementById("game-screen");
