@@ -3,10 +3,11 @@ import threading
 import json
 from protocols import Protocols
 import time
+from room import Room
 
 
 class Server:
-    def __init__(self, host = "localhost", port = 8080):
+    def __init__(self, host = "127.0.0.1", port = 64209):
         self.host = host
         self.port = port
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,7 +16,7 @@ class Server:
         #allows the server to start listening for clients
         self.server_socket.listen()
         # A dictionary to store the clients and their nicknames
-        self.clients = {}
+        self.client_names = {}
         # A dictionary to store the rooms and their clients
         self.opponents = {}
         # A dictionary to store the rooms and their questions
@@ -36,7 +37,7 @@ class Server:
 
             #checks if the type of the message is a nickname request, if it is, then it stores the client's nickname in the clients dictionary with the client as the key and the nickname as the value. If it is not, then it continues to wait for a valid message from the client.
             if r_type == Protocols.Request.NICKNAME:
-                self.clients[client] = nickname
+                self.client_names[client] = nickname
             else:
                 continue
 
@@ -56,19 +57,20 @@ class Server:
     def create_room(self, client):
         print("Creating Room")
         # creates a room with the client and the waiting_for_pair client, 
-        room = room.Room(client, self.waiting_for_pair)
+        room = Room(client, self.waiting_for_pair)
         # modifies the opponents dictionary to store the opponent of each client, with the client as the key and the opponent as the value.
         self.opponents[client] = self.waiting_for_pair
         self.opponents[self.waiting_for_pair] = client
         #sends a message to both clients that they have been paired up with their opponent, and includes the nickname of their opponent in the message. This will allow the clients to know who they are playing against and start the game.
-        self.send(Protocols.Response.OPPONENT, None, self.client_names[client], self.waiting_for_pair)
-        self.send(Protocols.Response.OPPONENT, None, self.client_names[self.waiting_for_pair], client)
+        self.send(Protocols.Response.OPPONENT, self.client_names[client], self.waiting_for_pair)
+        self.send(Protocols.Response.OPPONENT, self.client_names[self.waiting_for_pair], client)
         # modifies the rooms dictionary to store the room of each client, with the client as the key and the room as the value.
         self.rooms[client] = room
         self.rooms[self.waiting_for_pair] = room
         #resets the waiting_for_pair variable to None, since there is no longer a client waiting for a pair.
         self.waiting_for_pair = None
 
+    
     #waiting for room to available, this will be prompted by handle_connect, and will wait for a client to be available to connect to. If there is a client waiting, it will connect the two clients together and start the game. If there is no client waiting, it will set the waiting_for_pair variable to the current client and wait for another client to connect.
     def wait_for_room(self, client):
         while True:
@@ -116,7 +118,7 @@ class Server:
             del self.opponents[client]
 
         #removes the client and opponent's nickname from the clients dictionary, with the client and opponent as the keys and the values. This will allow us to keep track of the clients and their nicknames, and allow us to handle the disconnection of a client and their opponent accordingly.
-        if client in self.client.names:
+        if client in self.client_names:
             del self.client_names[client]
 
         if opponent in self.client_names:
@@ -157,7 +159,7 @@ class Server:
                 room.finished = True
 
             self.send(Protocols.Response.WINNER, None, client)
-            self.send_to_opponent(Protocols.Response.WINNER, self.clients[client], client)
+            self.send_to_opponent(Protocols.Response.WINNER, self.client_names[client], client)
 
         else:
             #if the answer is correct, but the client has not answered all the questions, then it sends a message to the client that the answer is correct, and sends a message to the opponent that their opponent has advanced to the next question. This will allow the clients to keep track of each other's progress through the questions and make the game more competitive.

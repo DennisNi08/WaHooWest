@@ -11,6 +11,6 @@ class Protocols:
         OPPONENT_DISCONNECTED = "protocols.opponent.disconnected"
         
     class Request:
-        Answer = "protocols.answer"
+        ANSWER = "protocols.answer"
         NICKNAME = "protocols.nickname"
         LEAVE = "protocols.leave"

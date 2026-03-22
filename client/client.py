@@ -5,17 +5,17 @@ from protocols import Protocols
 
 class Client:
     # player initialization
-    def __init__(self, host = "127.0.0.1", port = 8080):
+    def __init__(self, host = "localhost", port = 64209):
             self.nickname = None
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.connect((host, port))
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.connect((host, port))
 
             self.closed = False
             self.started = False
             self.questions = []
             self.current_question_index = 0
             self.opponent_question_index = 0
-            self.opponent_name = None
+            self.opponent_data = None
             self.winner = None
 
     # creates thread for receive method to handle server data
@@ -32,7 +32,7 @@ class Client:
     def receive(self):
         while not self.closed:
             try:
-                data = self.client.recv(1024).decode("ascii")
+                data = self.server.recv(1024).decode("ascii")
                 message = json.loads(data)
                 self.handle_response(message)
             except:
@@ -43,12 +43,12 @@ class Client:
     # just closes player session
     def close(self):
         self.closed = True
-        self.client.close() # closes socket connection
+        self.server.close() # closes socket connection
     
     # validates user answer
     # idk if this just pertains to the math that ts video was doing, or if we can modify it to include whatever else we're including
     def client_validate_answer(self, attempt):
-        question = self.get_current_question
+        question = self.get_current_question()
         answer = eval(question)
         if answer == int(attempt):
             self.current_question_index += 1
@@ -74,6 +74,6 @@ class Client:
 
     def get_current_question(self):
         # check to avoid index OOB exceptions
-        if self.current_question_index >= len(self.questions):
+        if self.current_question_index >= len(self.questions): 
             return ""
         return self.questions[self.current_question_index]
