@@ -13,12 +13,15 @@ export const Protocols = {
     TIE: "protocols.tie",
     GAME_OVER: "protocols.game.over",
     OPPONENT_DISCONNECTED: "protocols.opponent.disconnected",
+    AI_FEEDBACK: "protocols.ai.feedback",
   },
   Request: {
     ANSWER: "protocols.answer",
     NICKNAME: "protocols.nickname",
     TABLE: "protocols.table",
     LEAVE: "protocols.leave",
+    SPECIES: "protocols.species",
+    FEEDBACK: "protocols.feedback",
   },
 } as const;
 

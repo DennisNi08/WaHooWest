@@ -104,11 +104,11 @@
     }
     #char-grid {
       position: absolute;
-      top: 200px; left: 50px;
+      top: 200px; left: 80px;
       display: grid;
       grid-template-columns: repeat(4, 200px);
       grid-template-rows: repeat(2, 240px);
-      gap: 40px 40px;
+      gap: 40px 120px;
       z-index: 2;
     }
     .char-cell {
@@ -150,6 +150,112 @@
     #game-screen {
       justify-content: center;
       align-items: center;
+    }
+
+    /* ── Progress Bar ─────────────────────────────────── */
+    #progress-bar {
+      position: absolute;
+      top: 10px;
+      left: 40px;
+      right: 40px;
+      height: 120px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #progress-track {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 9px;
+      border: 2px solid rgba(255,255,255,0.4);
+    }
+    #progress-fill-left {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #4caf50, #81c784);
+      border-radius: 9px 0 0 9px;
+      transition: width 0.5s ease;
+    }
+    #progress-fill-right {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 0%;
+      background: linear-gradient(270deg, #f44336, #e57373);
+      border-radius: 0 9px 9px 0;
+      transition: width 0.5s ease;
+    }
+    .progress-char {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      top: 20px;
+      transition: left 0.5s ease, right 0.5s ease;
+      z-index: 4;
+      image-rendering: pixelated;
+    }
+    .progress-char img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    #char-left { left: -40px; }
+    #char-right { right: -40px; left: auto; }
+    #star-center {
+      position: absolute;
+      left: calc(50% - 24px);
+      top: -15px;
+      width: 48px;
+      height: 48px;
+      z-index: 5;
+    }
+    #star-center img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .progress-name {
+      position: absolute;
+      bottom: -52px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 3px #000;
+      white-space: nowrap;
+    }
+    #name-left { left: 0px; }
+    #name-right { right: 0px; }
+
+    #end-screen #progress-bar {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      width: 80%;
+      max-width: 1000px;
+      margin: 10px 0;
+    }
+
+    @keyframes throwStarRight {
+      0%   { left: calc(50% - 24px); transform: scale(1) rotate(0deg); }
+      30%  { transform: scale(1.4) rotate(180deg); top: -40px; }
+      70%  { transform: scale(1.2) rotate(540deg); top: -10px; }
+      100% { left: calc(100% - 60px); transform: scale(1) rotate(720deg); top: 30px; }
+    }
+    @keyframes throwStarLeft {
+      0%   { left: calc(50% - 24px); transform: scale(1) rotate(0deg); }
+      30%  { transform: scale(1.4) rotate(-180deg); top: -40px; }
+      70%  { transform: scale(1.2) rotate(-540deg); top: -10px; }
+      100% { left: -20px; transform: scale(1) rotate(-720deg); top: 30px; }
+    }
+    .star-throw-right {
+      animation: throwStarRight 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    .star-throw-left {
+      animation: throwStarLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
     /* Top area: image left + question text right */
@@ -292,34 +398,44 @@
       z-index: 2;
       width: 85%;
       max-width: 1000px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
       padding-bottom: 20px;
     }
     .review-card {
       background: rgba(0,0,0,0.65);
       border-radius: 10px;
-      padding: 14px 18px;
+      padding: 12px 14px;
       color: #fff;
-      border-left: 6px solid;
+      border: 2px solid;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .review-card.correct {
-      border-left-color: #4caf50;
+      border-color: #4caf50;
     }
     .review-card.wrong {
-      border-left-color: #f44336;
+      border-color: #f44336;
     }
     .review-q {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
       margin-bottom: 6px;
       line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
     }
     .review-answer {
-      font-size: 15px;
-      margin-top: 4px;
+      font-size: 13px;
+      margin-top: 3px;
       line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .review-answer.your-correct {
       color: #a5d6a7;
@@ -329,6 +445,50 @@
     }
     .review-answer.correct-ans {
       color: #a5d6a7;
+    }
+
+    /* ── AI Coach Feedback ─────────────────────────────── */
+    #ai-feedback-section {
+      z-index: 2;
+      width: 85%;
+      max-width: 1000px;
+      background: rgba(0,0,0,0.65);
+      border: 2px solid #ffd54f;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 10px;
+    }
+    #ai-feedback-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #ffd54f;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    #ai-feedback-text {
+      font-size: 16px;
+      color: #fff;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    #ai-feedback-loading {
+      text-align: center;
+      color: #ffd54f;
+      font-size: 16px;
+    }
+    .ai-spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,213,79,0.3);
+      border-top-color: #ffd54f;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -366,6 +526,19 @@
   <div id="game-screen" class="screen">
     <img class="bg" src="images/gamescreen.png" alt="">
 
+    <!-- Progress Bar -->
+    <div id="progress-bar">
+      <div id="char-left" class="progress-char"><img src="" alt=""></div>
+      <div id="progress-track">
+        <div id="progress-fill-left"></div>
+        <div id="progress-fill-right"></div>
+        <div id="star-center"><img src="images/sheriffStar2.png" alt="⭐"></div>
+      </div>
+      <div id="name-left" class="progress-name"></div>
+      <div id="name-right" class="progress-name"></div>
+      <div id="char-right" class="progress-char"><img src="" alt=""></div>
+    </div>
+
     <!-- Top: image left + question text right -->
     <div id="game-top">
       <div id="game-img"></div>
@@ -393,6 +566,11 @@
   <div id="end-screen" class="screen">
     <img id="end-bg" class="bg" src="" alt="">
     <div id="end-text"></div>
+    <div id="ai-feedback-section" style="display:none;">
+      <div id="ai-feedback-title">🤖 AI Coach Feedback</div>
+      <div id="ai-feedback-loading"><span class="ai-spinner"></span> Analyzing your performance...</div>
+      <div id="ai-feedback-text"></div>
+    </div>
     <div id="review-title">📋 Review</div>
     <div id="review-section"></div>
     <button id="play-again-btn">PLAY AGAIN</button>
@@ -419,12 +597,15 @@ const Protocols = {
     TIE:                  "protocols.tie",
     GAME_OVER:            "protocols.game.over",
     OPPONENT_DISCONNECTED:"protocols.opponent.disconnected",
+    AI_FEEDBACK:          "protocols.ai.feedback",
   },
   Request: {
     ANSWER:   "protocols.answer",
     NICKNAME: "protocols.nickname",
     TABLE:    "protocols.table",
     LEAVE:    "protocols.leave",
+    SPECIES:  "protocols.species",
+    FEEDBACK: "protocols.feedback",
   },
 };
 
@@ -505,7 +686,9 @@ const client = {
   questions: [],
   currentQuestionIndex: 0,
   opponentQuestionIndex: 0,
+  opponentCorrectCount: 0,
   opponentName: null,
+  opponentSpecies: null,
   winner: null,
   youWon: false,
   tie: false,
@@ -565,12 +748,19 @@ const client = {
         break;
 
       case Protocols.Response.OPPONENT:
-        this.opponentName = data;
+        if (typeof data === 'object' && data !== null) {
+          this.opponentName = data.name;
+          this.opponentSpecies = data.species;
+        } else {
+          this.opponentName = data;
+        }
         ui.refreshWaiting();
         break;
 
       case Protocols.Response.OPPONENT_ADVANCE:
         this.opponentQuestionIndex++;
+        if (data === true) this.opponentCorrectCount++;
+        ui.updateProgressBar();
         break;
 
       case Protocols.Response.ANSWER_VALID:
@@ -579,6 +769,7 @@ const client = {
         }
         this.currentQuestionIndex++;
         this.correctCount++;
+        ui.updateProgressBar();
         break;
 
       case Protocols.Response.ANSWER_INVALID:
@@ -595,7 +786,17 @@ const client = {
 
       case Protocols.Response.START:
         this.started = true;
+        this.currentQuestionIndex = 0;
+        this.opponentQuestionIndex = 0;
+        this.opponentCorrectCount = 0;
+        this.correctCount = 0;
+        this.reviewHistory = [];
+        this.winner = null;
+        this.youWon = false;
+        this.tie = false;
+        this.gameOver = false;
         ui.showScreen("game-screen");
+        ui.initProgressBar();
         ui.renderGame();
         break;
 
@@ -610,8 +811,14 @@ const client = {
         ui.showEnd();
         break;
 
+      case Protocols.Response.AI_FEEDBACK:
+        ui.showAiFeedback(data);
+        break;
+
       case Protocols.Response.OPPONENT_DISCONNECTED:
-        this.close();
+        if (!this.gameOver && !this.tie && !this.youWon && !this.winner) {
+          this.close();
+        }
         ui.showEnd();
         break;
     }
@@ -671,7 +878,7 @@ const ui = {
   /* ── Subject Selection ───────────────── */
   initSubjects() {
     const subjects = {
-      "btn-sat":  "QUESTION_ANSWERS_SATMATH",
+      "btn-sat":  "QUESTION_ANSWERS_SATREADING",
       "btn-lsat": "QUESTION_ANSWERS_LSAT",
       "btn-mcat": "QUESTION_ANSWERS_MCAT",
     };
@@ -717,6 +924,7 @@ const ui = {
       // Store both
       client.selectedName = char.name;
       client.selectedSpecies = char.species;
+      client.send(Protocols.Request.SPECIES, char.species);
       
       ui.showScreen("waiting-screen");
       ui.refreshWaiting();
@@ -801,6 +1009,82 @@ const ui = {
     }
   },
 
+  /* ── Progress Bar ─────────────────────── */
+  WIN_TARGET: 3,
+
+  initProgressBar() {
+    const sp = client.selectedSpecies || "bunny";
+    const op = client.opponentSpecies || "bunny";
+    document.querySelector("#char-left img").src = `images/animals/${sp}/${sp}_idle.png`;
+    document.querySelector("#char-right img").src = `images/animals/${op}/${op}_idle_reversed.png`;
+    document.getElementById("name-left").textContent = client.nickname || "You";
+    document.getElementById("name-right").textContent = client.opponentName || "Opponent";
+    document.getElementById("progress-fill-left").style.width = "0%";
+    document.getElementById("progress-fill-right").style.width = "0%";
+    const charLeft = document.getElementById("char-left");
+    charLeft.style.left = "-40px";
+    charLeft.style.right = "auto";
+    const charRight = document.getElementById("char-right");
+    charRight.style.right = "-40px";
+    charRight.style.left = "auto";
+    const star = document.getElementById("star-center");
+    star.style.left = "calc(50% - 24px)";
+    star.style.opacity = "1";
+    star.style.top = "-15px";
+    star.classList.remove("star-throw-left", "star-throw-right");
+  },
+
+  updateProgressBar() {
+    const wt = this.WIN_TARGET;
+    const myPct = Math.min(client.correctCount / wt, 1);
+    const opPct = Math.min(client.opponentCorrectCount / wt, 1);
+
+    document.getElementById("progress-fill-left").style.width = `${myPct * 50}%`;
+    document.getElementById("progress-fill-right").style.width = `${opPct * 50}%`;
+
+    // Move characters toward center using calc() so it scales with any track width
+    // At 0%: calc(0% - 40px) = -40px (off edge). At 100%: calc(50% - 40px) = centered.
+    const charLeft = document.getElementById("char-left");
+    charLeft.style.left = `calc(${myPct * 50}% - 40px)`;
+
+    const charRight = document.getElementById("char-right");
+    charRight.style.right = `calc(${opPct * 50}% - 40px)`;
+    charRight.style.left = "auto";
+  },
+
+  setProgressEndState() {
+    const sp = client.selectedSpecies || "bunny";
+    const op = client.opponentSpecies || "bunny";
+    const star = document.getElementById("star-center");
+    star.classList.remove("star-throw-left", "star-throw-right");
+
+    if (client.tie) {
+      // Both sad — star stays in center, no throw
+      document.querySelector("#char-left img").src = `images/animals/${sp}/${sp}_sad.png`;
+      document.querySelector("#char-right img").src = `images/animals/${op}/${op}_sad.png`;
+    } else if (client.youWon) {
+      // You won: happy + throw star at opponent (right)
+      document.querySelector("#char-left img").src = `images/animals/${sp}/${sp}_happy.png`;
+      document.querySelector("#char-right img").src = `images/animals/${op}/${op}_sad.png`;
+      // Small delay so the user sees the final bar state first
+      setTimeout(() => { star.classList.add("star-throw-right"); }, 400);
+    } else {
+      // You lost: sad, opponent happy + star flies at you (left)
+      document.querySelector("#char-left img").src = `images/animals/${sp}/${sp}_sad.png`;
+      document.querySelector("#char-right img").src = `images/animals/${op}/${op}_happy.png`;
+      setTimeout(() => { star.classList.add("star-throw-left"); }, 400);
+    }
+  },
+
+  showAiFeedback(text) {
+    const section = document.getElementById("ai-feedback-section");
+    const loading = document.getElementById("ai-feedback-loading");
+    const textEl = document.getElementById("ai-feedback-text");
+    loading.style.display = "none";
+    textEl.textContent = text;
+    section.style.display = "block";
+  },
+
   /* ── End Screen ──────────────────────── */
   showEnd() {
     let text;
@@ -820,6 +1104,15 @@ const ui = {
     }
     document.getElementById("end-bg").src = bgImage;
     document.getElementById("end-text").textContent = text;
+
+    // Move progress bar to end screen and show final poses
+    const progressBar = document.getElementById("progress-bar");
+    const endScreen = document.getElementById("end-screen");
+    if (progressBar) {
+      endScreen.insertBefore(progressBar, endScreen.children[1]);
+      this.updateProgressBar();
+      this.setProgressEndState();
+    }
 
     // Helper: display an answer as "Letter) text"
     const answerDisplay = (answer, choices) => {
@@ -866,7 +1159,57 @@ const ui = {
       reviewEl.appendChild(card);
     });
 
-    document.getElementById("play-again-btn").onclick = () => {
+    // Request AI feedback from Gemini
+    const feedbackSection = document.getElementById("ai-feedback-section");
+    const feedbackLoading = document.getElementById("ai-feedback-loading");
+    const feedbackText = document.getElementById("ai-feedback-text");
+    feedbackSection.style.display = "block";
+    feedbackLoading.style.display = "block";
+    feedbackText.textContent = "";
+    if (client.reviewHistory.length > 0) {
+      client.send(Protocols.Request.FEEDBACK, client.reviewHistory.map(item => ({
+        question: item.question || item.currentQuestionText || "",
+        yourAnswer: item.yourAnswer || "",
+        correctAnswer: item.correctAnswer || "",
+        correct: !!item.correct,
+      })));
+    }
+
+    document.getElementById("play-again-btn").onclick = async () => {
+      // Move progress bar back to game screen
+      const progressBar = document.getElementById("progress-bar");
+      const gameScreen = document.getElementById("game-screen");
+      if (progressBar && gameScreen) {
+        gameScreen.insertBefore(progressBar, gameScreen.children[1]);
+      }
+
+      // Reset all game state
+      client.started = false;
+      client.gameOver = false;
+      client.currentQuestionIndex = 0;
+      client.opponentQuestionIndex = 0;
+      client.opponentCorrectCount = 0;
+      client.correctCount = 0;
+      client.reviewHistory = [];
+      client.winner = null;
+      client.youWon = false;
+      client.tie = false;
+      client.opponentName = null;
+      client.opponentSpecies = null;
+
+      // Reconnect WebSocket if it was closed
+      if (client.closed || !client.ws || client.ws.readyState !== WebSocket.OPEN) {
+        client.closed = false;
+        try {
+          await client.start();
+          client.send(Protocols.Request.NICKNAME, client.nickname || "Player");
+        } catch (e) {
+          console.error("Reconnect failed", e);
+          alert("Could not reconnect to server. Please refresh the page.");
+          return;
+        }
+      }
+
       ui.showScreen("main-screen");
     };
     this.showScreen("end-screen");

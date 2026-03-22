@@ -21,7 +21,8 @@ type ChoiceTuple = [string | null, string | null, string | null, string | null];
  * a small in-memory question set when Snowflake is unavailable.
  */
 export class Room {
-  static MAX_QUESTIONS = 3;
+  static MAX_QUESTIONS = 5;
+  static WIN_TARGET = 3;
 
   questions: string[] = [];
   answers: string[] = [];
@@ -139,6 +140,18 @@ export class Room {
       if (!this.isClientDone(c)) return false;
     }
     return true;
+  }
+
+  /** Check if someone has reached WIN_TARGET correct answers */
+  hasEarlyWinner(): { winner: WebSocket | null; loser: WebSocket | null } {
+    const clients = [...this.indexes.keys()];
+    if (clients.length < 2) return { winner: null, loser: null };
+    const [c1, c2] = clients;
+    const s1 = this.correctCounts.get(c1) ?? 0;
+    const s2 = this.correctCounts.get(c2) ?? 0;
+    if (s1 >= Room.WIN_TARGET) return { winner: c1, loser: c2 };
+    if (s2 >= Room.WIN_TARGET) return { winner: c2, loser: c1 };
+    return { winner: null, loser: null };
   }
 
   getWinner(): { winner: WebSocket | null; loser: WebSocket | null } {

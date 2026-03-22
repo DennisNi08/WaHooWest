@@ -40,6 +40,8 @@ class Server {
   private rooms = new Map<WebSocket, Room>();
   /** table preference per client */
   private clientTables = new Map<WebSocket, string>();
+  /** species per client */
+  private clientSpecies = new Map<WebSocket, string>();
   /** per-subject waiting queue (subject → waiting client socket) */
   private waitingBySubject = new Map<WebSocket, string>(); // note: reversed for easy lookup too
   private waitingBySubjectMap = new Map<string, WebSocket>();
@@ -203,9 +205,15 @@ class Server {
     this.rooms.set(client, room);
     this.rooms.set(waitingClient, room);
 
-    // Send opponent names
-    this.send(Protocols.Response.OPPONENT, this.clientNames.get(client) ?? "???", waitingClient);
-    this.send(Protocols.Response.OPPONENT, this.clientNames.get(waitingClient) ?? "???", client);
+    // Send opponent info (name + species)
+    this.send(Protocols.Response.OPPONENT, {
+      name: this.clientNames.get(client) ?? "???",
+      species: this.clientSpecies.get(client) ?? "dino",
+    }, waitingClient);
+    this.send(Protocols.Response.OPPONENT, {
+      name: this.clientNames.get(waitingClient) ?? "???",
+      species: this.clientSpecies.get(waitingClient) ?? "dino",
+    }, client);
 
     // Send game data to each client
     for (const c of [client, waitingClient]) {
@@ -230,6 +238,46 @@ class Server {
 
     if (rType === Protocols.Request.TABLE) {
       this.clientTables.set(client, data);
+
+      // Clean up old room/opponent so this client can re-queue
+      const oldOpponent = this.opponents.get(client);
+      if (oldOpponent) {
+        this.opponents.delete(oldOpponent);
+        this.rooms.delete(oldOpponent);
+      }
+      this.opponents.delete(client);
+      this.rooms.delete(client);
+
+      // Remove from any previous waiting queue
+      const prevSubj = this.waitingBySubject.get(client);
+      if (prevSubj) {
+        this.waitingBySubjectMap.delete(prevSubj);
+        this.waitingBySubject.delete(client);
+      }
+
+      // Per-subject pairing (same logic as initial connect)
+      const tableName: string = data;
+      const waitingClient = this.waitingBySubjectMap.get(tableName);
+      if (waitingClient && waitingClient !== client && waitingClient.readyState === WebSocket.OPEN) {
+        this.waitingBySubjectMap.delete(tableName);
+        this.waitingBySubject.delete(waitingClient);
+        console.log(`[REPLAY] Pairing for ${tableName}`);
+        this.createRoom(client, waitingClient, tableName);
+      } else {
+        this.waitingBySubjectMap.set(tableName, client);
+        this.waitingBySubject.set(client, tableName);
+        console.log(`[REPLAY] Waiting for opponent in ${tableName}`);
+      }
+      return;
+    }
+
+    if (rType === Protocols.Request.SPECIES) {
+      this.clientSpecies.set(client, data);
+      return;
+    }
+
+    if (rType === Protocols.Request.FEEDBACK) {
+      this.handleFeedbackRequest(data, client);
       return;
     }
 
@@ -252,9 +300,20 @@ class Server {
       this.send(Protocols.Response.ANSWER_INVALID, reviewItem, client);
     }
 
-    this.sendToOpponent(Protocols.Response.OPPONENT_ADVANCE, null, client);
+    this.sendToOpponent(Protocols.Response.OPPONENT_ADVANCE, correct, client);
 
-    if (room.isClientDone(client)) {
+    // Check for early win: first to WIN_TARGET correct
+    const earlyResult = room.hasEarlyWinner();
+    if (earlyResult.winner && !room.finished) {
+      room.finished = true;
+      const opponent = this.opponents.get(client);
+      // Send GAME_OVER to both
+      this.send(Protocols.Response.GAME_OVER, room.getScore(client), client);
+      if (opponent) this.send(Protocols.Response.GAME_OVER, room.getScore(opponent), opponent);
+      // Send WINNER
+      this.send(Protocols.Response.WINNER, null, earlyResult.winner);
+      this.send(Protocols.Response.WINNER, this.clientNames.get(earlyResult.winner) ?? "???", earlyResult.loser!);
+    } else if (room.isClientDone(client)) {
       this.send(Protocols.Response.GAME_OVER, room.getScore(client), client);
 
       if (room.areBothDone() && !room.finished) {
@@ -275,6 +334,91 @@ class Server {
       if (detail) {
         this.send(Protocols.Response.QUESTION_DETAIL, detail, client);
       }
+    }
+  }
+
+  /* ── Gemini AI Feedback ───────────────────────────────── */
+
+  private async handleFeedbackRequest(reviewData: any[], client: WebSocket): Promise<void> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.log("[AI] No GEMINI_API_KEY set, skipping feedback");
+      this.send(Protocols.Response.AI_FEEDBACK, "AI feedback is not configured.", client);
+      return;
+    }
+
+    // Build a summary of the player's performance
+    const lines = reviewData.map((item: any, i: number) => {
+      const status = item.correct ? "CORRECT" : "WRONG";
+      const q = item.question || "(no text)";
+      const yourAns = item.yourAnswer || "?";
+      const correctAns = item.correctAnswer || "?";
+      return `Q${i + 1} [${status}]: "${q.slice(0, 200)}" — You answered: ${yourAns}, Correct: ${correctAns}`;
+    });
+
+    const correct = reviewData.filter((r: any) => r.correct).length;
+    const total = reviewData.length;
+
+    const prompt = `You are an expert academic tutor and quiz coach for a competitive study game called WaHooWest. A player just completed a round. Analyze their performance in depth.
+
+Results: ${correct}/${total} correct
+
+${lines.join("\n")}
+
+Provide a thorough, structured analysis following this format:
+
+1. PERFORMANCE SUMMARY: Give an overall assessment of how they did. Be specific about their score and what it means.
+
+2. WHAT YOU NAILED: For each question they got right, briefly explain why that answer is correct and praise their knowledge.
+
+3. WHERE YOU STUMBLED: For each wrong answer, explain:
+   - Why their chosen answer is incorrect
+   - Why the correct answer is right
+   - The key concept or reasoning they may have missed
+
+4. STUDY TIPS: Based on the specific topics they struggled with, give 2-3 actionable study strategies. Be specific to the subject matter, not generic advice.
+
+5. ENCOURAGEMENT: End with a motivating note about their progress and potential.
+
+Keep a warm, encouraging tone throughout — like a supportive coach, not a harsh grader. Use plain text only, NO markdown formatting (no asterisks, no hashtags, no bullet symbols). Use numbered lists and line breaks for structure instead.`;
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      const body = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800,
+        },
+      });
+
+      console.log(`[AI] Requesting Gemini feedback for ${total} questions...`);
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.log(`[AI] Gemini API error ${resp.status}: ${errText.slice(0, 200)}`);
+        
+        // Provide a robust fallback if AI is ratelimited (429) or fails
+        const fallbackText = `Wow, great effort! You scored ${correct} out of ${total}.\n\n` +
+          `Tip: Always read the passage carefully and look for evidence that directly supports your answer.\n\n` +
+          `Keep practicing to improve your speed and accuracy!`;
+          
+        this.send(Protocols.Response.AI_FEEDBACK, fallbackText, client);
+        return;
+      }
+
+      const json: any = await resp.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "No feedback generated.";
+      console.log(`[AI] Feedback received (${text.length} chars)`);
+      this.send(Protocols.Response.AI_FEEDBACK, text, client);
+    } catch (e: any) {
+      console.log(`[AI] Fetch error: ${e.message}`);
+      this.send(Protocols.Response.AI_FEEDBACK, "Could not generate feedback right now.", client);
     }
   }
 
@@ -319,6 +463,7 @@ class Server {
     }
 
     this.clientTables.delete(client);
+    this.clientSpecies.delete(client);
 
     try {
       client.close();
