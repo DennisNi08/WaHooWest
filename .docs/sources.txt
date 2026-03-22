@@ -1,0 +1,31 @@
+https://www.youtube.com/watch?v=l99FszrS9BA
+https://www.youtube.com/watch?v=pEW8cillayw
+Used these videos to get background knowledge and create a structure for client and server sockets
+
+https://www.w3schools.com/html/html_examples.asp
+Used to get familiar with html attributes and stuff like ts
+
+https://use.ai/?model=claude&utm_match_type=e&utm_funnel=&partner=WM&id=YmluZ3xjcGN8VVMtRU4tRGVza3RvcC1TZWFyY2gtVXNlQUktQ2xhdWRlfDUyMzYyMzQ2NXxjbGF1ZGUgYWl8fHwxMzE3MjE3NjYxOTI5NTA4fFVTLUVOLUNsYXVkZS1HZW5lcmljLUV4YWN0fHx8fHx8fHx8fA&url=https%3A%2F%2Fuse.ai%3Fmodel%3Dclaude&msclkid=480bd358d50f183bf9cbbae738f5087e
+Use Claude to debug and implement features/formatting. Converted code from python to typescript
+
+https://use.ai/?model=gemini&utm_match_type=p&utm_funnel=&partner=WM&id=YmluZ3xjcGN8VVMtRU4tRGVza3RvcC1TZWFyY2gtVXNlQUktR2VtaW5pfDUyMzYyMzQ2NnxnZW1pbmkgY2hhdGJvdHx8fDEzMTM5MTkxMjY5ODQzODV8VVMtRU4tR2VtaW5pLUdlbmVyaWMtUGhyYXNlfHx8fHx8fHx8fA&url=https%3A%2F%2Fuse.ai%3Fmodel%3Dgemini&msclkid=e0782b0e4e9e1da5732b42b1a081d28c
+Used Gemini to debug and is imbedded into program
+
+https://signup.snowflake.com/?utm_source=bing&utm_medium=paidsearch&utm_campaign=na-us-en-brand-core-exact&utm_content=bi-rsa-evg-ss-free-trial&utm_term=c-o-snowflake-e&_bt=&_bk=snowflake&_bm=e&_bn=o&_bg=1268837230512776&gclsrc=3p.ds&&gclid=4448f95d584c1f68cebf909d53b96c42&gclsrc=3p.ds&msclkid=4448f95d584c1f68cebf909d53b96c42
+Used for databases
+
+https://auth0.com/
+used for authentification
+
+https://www.canva.com/templates
+Used for design
+
+https://satsuiteeducatorquestionbank.collegeboard.org/
+Used to obtain SAT questions
+
+https://www.princetonreview.com/law/free-lsat-practice-test?ExDT=2&msclkid=55274a5dcd571beefdc2239dc1d43e54&utm_source=bing&utm_medium=cpc&utm_campaign=%5BLSAT%5D%20Top%20of%20Funnel%20-%20United%20States&utm_term=lsat%20practice%20test&utm_content=LSAT%20Free%20Practice%20Test
+Used to get lsat questions
+
+https://www.test-guide.com/free-mcat-practice-tests.html
+used for MCAT questions
+
