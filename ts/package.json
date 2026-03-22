@@ -7,8 +7,8 @@
     "build:client": "node scripts/build-client.js",
     "build": "npm run build:server && npm run build:client",
     "start:server": "node dist/server/server/src/main.js",
-    "dev:server": "ts-node server/src/main.ts",
-    "dev:client": "npx http-server dist/client -p 8080 -c-1",
+    "dev:server": "npx nodemon --watch server/src --watch shared -e ts --exec 'npx ts-node server/src/main.ts'",
+    "dev:client": "npx http-server client/src -p 8080 -c-1",
     "start": "npm run build && npm run start:server"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "@types/node": "^20.11.0",
     "@types/ws": "^8.5.10",
     "http-server": "^14.1.1",
+    "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

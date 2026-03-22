@@ -6,8 +6,20 @@ import { WebSocketServer, WebSocket } from "ws";
 import { Protocols, Message } from "../../shared/protocols";
 import { Room } from "./room";
 
-// Load .env from ts/server/.env
-dotenv.config({ path: path.join(__dirname, "..", ".env") });
+// Load .env – try multiple likely paths
+const envCandidates = [
+  path.join(__dirname, "..", ".env"),                    // dev: ts/server/src/../.env
+  path.join(__dirname, "..", "..", ".env"),              // alt
+  path.join(__dirname, "..", "..", "..", "..", "server", ".env"),  // compiled: dist/server/server/src/../../../../server/.env
+  path.resolve("server", ".env"),                       // cwd-relative
+];
+for (const p of envCandidates) {
+  const result = dotenv.config({ path: p });
+  if (!result.error) {
+    console.log(`[ENV] Loaded .env from ${p}`);
+    break;
+  }
+}
 
 /**
  * WaHooWest game server – WebSocket version.

@@ -8,13 +8,14 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #b5b5d0;
+      background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
       color: #3c1e0f;
+      overflow: hidden;
     }
 
     /* ── Shared container ─────────────────────────────── */
@@ -23,8 +24,7 @@
       width: 1366px;
       height: 768px;
       overflow: hidden;
-      background: #fff;
-      border: 2px solid #444;
+      background: #000;
     }
 
     .screen {
@@ -40,8 +40,9 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: fill;
+      object-fit: cover;
       pointer-events: none;
+      z-index: 0;
     }
 
     /* ── Home Screen ──────────────────────────────────── */
@@ -51,13 +52,13 @@
     }
     #signin-btn {
       position: absolute;
-      left: px; top: 360px;
-      width: 415px; height: 125px;
+      left: 390px; top: 390px;
+      width: 585px; height: 125px;
       background: transparent;
       border: none;
       cursor: pointer;
       font: bold 72px 'Comic Sans MS', cursive;
-      color: rgb(97, 33, 21);
+      color: rgb(131, 94, 87);
       z-index: 2;
     }
     #signin-btn:hover { opacity: 0.85; }
@@ -151,12 +152,33 @@
       align-items: center;
     }
 
-    /* Left panel: question text + choices */
-    #game-left {
+    /* Top area: image left + question text right */
+    #game-top {
       position: absolute;
-      left: 90px; top: 20px;
-      width: 550px;
+      left: 60px; top: 200px;
+      right: 60px;
       z-index: 2;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    #game-img {
+      flex-shrink: 0;
+      max-width: 400px;
+      max-height: 340px;
+      display: flex;
+      align-items: flex-start;
+    }
+    #game-img img {
+      max-width: 100%;
+      max-height: 340px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    #game-text {
+      flex: 1;
+      min-width: 0;
     }
     #q-number {
       font-size: 28px;
@@ -167,36 +189,39 @@
       font-size: 18px;
       color: rgb(80,50,30);
       margin-bottom: 8px;
-      max-height: 140px;
+      max-height: 120px;
       overflow-y: auto;
     }
     #q-text {
       font-size: 22px;
       color: rgb(30,15,5);
       margin-bottom: 6px;
-      max-height: 250px;
+      max-height: 220px;
       overflow-y: auto;
     }
 
-    /* Choice buttons in the brown box area */
-    #choices-area {
+    /* Choice buttons – two columns at bottom */
+    #choices-left, #choices-right {
       position: absolute;
-      left: 90px; top: 470px;
-      width: 550px;
+      bottom: 80px;
+      width: 540px;
       z-index: 2;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 60px;
     }
+    #choices-left  { left: 90px; bottom: 60px; }
+    #choices-right { right: 90px; bottom: 60px}
+
     .choice-btn {
       width: 100%;
-      min-height: 54px;
-      padding: 10px 14px;
+      min-height: 70px;
+      padding: 14px 18px;
       background: rgba(255,255,255,0.22);
       border: 2px solid rgb(80,40,20);
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
-      font: 20px 'Comic Sans MS', cursive;
+      font: 22px 'Comic Sans MS', cursive;
       color: rgb(40,20,5);
       text-align: left;
     }
@@ -207,10 +232,11 @@
     #done-banner {
       display: none;
       position: absolute;
-      left: 90px; top: 480px;
-      width: 550px;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
       z-index: 2;
-      font-size: 28px;
+      font-size: 32px;
+      text-align: center;
     }
     #done-banner .sub {
       font-size: 20px;
@@ -218,41 +244,36 @@
       margin-top: 8px;
     }
 
-    /* Right panel: image + opponent data */
-    #game-right-img {
-      position: absolute;
-      right: 90px; top: 30px;
-      width: 540px; height: 420px;
-      z-index: 2;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-    #game-right-img img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-
-    #opponent-panel {
-      position: absolute;
-      right: 90px; top: 480px;
-      width: 540px;
-      z-index: 2;
-      font-size: 26px;
-      line-height: 1.6;
-    }
-
     /* ── End Screen ───────────────────────────────────── */
     #end-screen {
       justify-content: center;
       align-items: center;
-      background: #fff;
     }
     #end-text {
-      font-size: 36px;
-      color: #000;
+      font-size: 42px;
+      color: #fff;
       text-align: center;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+      z-index: 2;
+      padding: 20px 40px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.5);
+    }
+    #play-again-btn {
+      margin-top: 30px;
+      padding: 16px 48px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+      background: rgba(0,0,0,0.6);
+      border: 3px solid #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 2;
+      transition: background 0.2s;
+    }
+    #play-again-btn:hover {
+      background: rgba(255,255,255,0.3);
     }
   </style>
 </head>
@@ -291,32 +312,34 @@
   <div id="game-screen" class="screen">
     <img class="bg" src="images/gamescreen.png" alt="">
 
-    <!-- Left panel: question -->
-    <div id="game-left">
-      <div id="q-number"></div>
-      <div id="q-passage"></div>
-      <div id="q-text"></div>
+    <!-- Top: image left + question text right -->
+    <div id="game-top">
+      <div id="game-img"></div>
+      <div id="game-text">
+        <div id="q-number"></div>
+        <div id="q-passage"></div>
+        <div id="q-text"></div>
+      </div>
     </div>
 
-    <!-- Left panel: choices -->
-    <div id="choices-area"></div>
+    <!-- Bottom-left: choices A & B -->
+    <div id="choices-left"></div>
 
-    <!-- Done overlay (replaces choices when finished) -->
+    <!-- Bottom-right: choices C & D -->
+    <div id="choices-right"></div>
+
+    <!-- Done overlay -->
     <div id="done-banner">
       <div id="done-score"></div>
       <div class="sub">Waiting for opponent to finish...</div>
     </div>
-
-    <!-- Right panel: question image -->
-    <div id="game-right-img"></div>
-
-    <!-- Right panel: opponent data -->
-    <div id="opponent-panel"></div>
   </div>
 
   <!-- ═══ END ═══ -->
   <div id="end-screen" class="screen">
+    <img id="end-bg" class="bg" src="" alt="">
     <div id="end-text"></div>
+    <button id="play-again-btn">PLAY AGAIN</button>
   </div>
 </div>
 
@@ -364,20 +387,28 @@ const auth = {
   accessToken: null,
 
   async startLogin() {
-    const resp = await fetch(`https://${AUTH0_DOMAIN}/oauth/device/code`, {
-      method: "POST",
-      body: new URLSearchParams({
-        client_id: AUTH0_CLIENT_ID,
-        scope: "openid profile email",
-        audience: AUTH0_AUDIENCE,
-      }),
-    });
-    const data = await resp.json();
-    this.deviceCode = data.device_code;
-    this.userCode = data.user_code;
-    this.verificationUri = data.verification_uri_complete;
-    if (this.verificationUri) window.open(this.verificationUri, "_blank");
-    return this.userCode;
+    console.log("[AUTH] Starting login...");
+    try {
+      const resp = await fetch(`https://${AUTH0_DOMAIN}/oauth/device/code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: AUTH0_CLIENT_ID,
+          scope: "openid profile email",
+          audience: AUTH0_AUDIENCE,
+        }),
+      });
+      const data = await resp.json();
+      console.log("[AUTH] Device code response:", data);
+      this.deviceCode = data.device_code;
+      this.userCode = data.user_code;
+      this.verificationUri = data.verification_uri_complete;
+      if (this.verificationUri) window.open(this.verificationUri, "_blank");
+      return this.userCode;
+    } catch (e) {
+      console.error("[AUTH] startLogin failed:", e);
+      return null;
+    }
   },
 
   async checkToken() {
@@ -483,7 +514,6 @@ const client = {
 
       case Protocols.Response.OPPONENT_ADVANCE:
         this.opponentQuestionIndex++;
-        ui.renderOpponent();
         break;
 
       case Protocols.Response.ANSWER_VALID:
@@ -535,12 +565,21 @@ const ui = {
   /* ── Home / Auth ─────────────────────── */
   initHome() {
     document.getElementById("signin-btn").onclick = async () => {
-      const code = await auth.startLogin();
-      const banner = document.getElementById("auth-code-banner");
-      banner.textContent = `Please log in at your browser.  Code: ${code}`;
-      banner.style.display = "block";
-      this._pollAuth();
+      await this._connectAsGuest();
     };
+  },
+
+  async _connectAsGuest() {
+    document.getElementById("auth-code-banner").style.display = "none";
+    try { await client.start(); } catch (e) {
+      console.error("Server connection failed", e);
+      alert("Could not connect to game server on port 64210. Is it running?");
+      return;
+    }
+    const nick = prompt("Enter your nickname:", "Player") || "Player";
+    client.send(Protocols.Request.NICKNAME, nick);
+    client.nickname = nick;
+    ui.showScreen("main-screen");
   },
 
   _authInterval: null,
@@ -648,72 +687,79 @@ const ui = {
     document.getElementById("q-text").textContent =
       client.currentQuestionText || "";
 
-    const choicesArea = document.getElementById("choices-area");
-    const doneBanner  = document.getElementById("done-banner");
+    const leftCol   = document.getElementById("choices-left");
+    const rightCol  = document.getElementById("choices-right");
+    const doneBanner = document.getElementById("done-banner");
 
     if (client.gameOver) {
-      choicesArea.style.display = "none";
+      leftCol.style.display = "none";
+      rightCol.style.display = "none";
       doneBanner.style.display = "block";
       document.getElementById("done-score").textContent =
         `All done! Score: ${client.correctCount}/${totalQs}`;
     } else {
       doneBanner.style.display = "none";
-      choicesArea.style.display = "flex";
-      choicesArea.innerHTML = "";
+      leftCol.style.display = "flex";
+      rightCol.style.display = "flex";
+      leftCol.innerHTML = "";
+      rightCol.innerHTML = "";
 
-      const letters = ["A","B","C","D"];
       const choices = client.currentChoices || {};
-      letters.forEach(letter => {
+      ["A","B"].forEach(letter => {
         const text = choices[letter];
         const btn = document.createElement("button");
         btn.className = "choice-btn";
         btn.textContent = text ? `${letter}:  ${text}` : `${letter}:  ---`;
         btn.onclick = () => {
           if (client.gameOver) return;
-          console.log("Answer:", letter);
           client.send(Protocols.Request.ANSWER, letter);
         };
-        choicesArea.appendChild(btn);
+        leftCol.appendChild(btn);
+      });
+      ["C","D"].forEach(letter => {
+        const text = choices[letter];
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.textContent = text ? `${letter}:  ${text}` : `${letter}:  ---`;
+        btn.onclick = () => {
+          if (client.gameOver) return;
+          client.send(Protocols.Request.ANSWER, letter);
+        };
+        rightCol.appendChild(btn);
       });
     }
 
-    const imgPanel = document.getElementById("game-right-img");
+    const imgPanel = document.getElementById("game-img");
     imgPanel.innerHTML = "";
     if (client.currentImageData) {
       const img = document.createElement("img");
       img.src = `data:image/png;base64,${client.currentImageData}`;
       imgPanel.appendChild(img);
     }
-
-    this.renderOpponent();
-  },
-
-  renderOpponent() {
-    const el = document.getElementById("opponent-panel");
-    const oppQ = client.opponentQuestionIndex + 1;
-    const myQ  = client.currentQuestionIndex + 1;
-    el.innerHTML = `
-      ${client.opponentName
-        ? `<div><b>Opponent:</b></div><div>${client.opponentName}</div>`
-        : ""}
-      <div style="margin-top:12px">Question: ${oppQ} / 3</div>
-      <div>You: Question ${myQ} / 3</div>
-    `;
   },
 
   /* ── End Screen ──────────────────────── */
   showEnd() {
     let text;
+    let bgImage;
     if (client.tie) {
       text = `It's a tie! You both scored ${client.correctCount}/3`;
+      bgImage = "images/winScreen.png";
     } else if (client.youWon) {
       text = `You won! Score: ${client.correctCount}/3`;
+      bgImage = "images/winScreen.png";
     } else if (client.winner) {
       text = `${client.winner} won! Your score: ${client.correctCount}/3`;
+      bgImage = "images/lostScreen.png";
     } else {
       text = "Opponent left the game.....";
+      bgImage = "images/lostScreen.png";
     }
+    document.getElementById("end-bg").src = bgImage;
     document.getElementById("end-text").textContent = text;
+    document.getElementById("play-again-btn").onclick = () => {
+      ui.showScreen("main-screen");
+    };
     this.showScreen("end-screen");
   },
 };
